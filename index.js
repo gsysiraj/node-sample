@@ -1,3 +1,5 @@
+require('dotenv-safe').config()
+require("./config/database")
 const app = require("./app")
 
 app.get('/', (req, res) => {
