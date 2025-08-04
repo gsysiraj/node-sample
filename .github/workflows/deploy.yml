@@ -1,0 +1,26 @@
+name: Deploy to GCP VM
+
+on:
+  push:
+    branches: [main] # or your deployment branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          port: ${{ secrets.PORT }}
+          key: ${{ secrets.KEY }}
+          script: |
+            cd /home/gssirajyusuf99/project/node-sample
+            git pull origin main
+            npm install
+            pm2 restart all
