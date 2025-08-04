@@ -21,6 +21,7 @@ jobs:
           key: ${{ secrets.KEY }}
           script: |
             cd /home/gssirajyusuf99/project/node-sample
+            git config --global --add safe.directory /home/gssirajyusuf99/project/node-sample
             git pull origin main
             npm install
             pm2 restart all
