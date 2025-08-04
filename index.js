@@ -7,6 +7,6 @@ app.get('/', (req, res) => {
     res.send("Server is up and running")
 })
 
-app.listen('3000', () => {
-    console.log("listening on port 3000")
+app.listen(8080, '0.0.0.0', () => {
+    console.log("listening on port 8080")
 })
