@@ -38,19 +38,25 @@ router.post('/tailor', upload.single('resume'), async (req, res) => {
         const structuredResume = await structureResume(resumeText);
 
         const tailorPrompt = `
-            You are a professional resume writer. Your task is to revise the 'Work Experience' section of the following resume to better match the provided job description.
-            Focus on highlighting the skills and accomplishments that are most relevant to the role.
-            Return only the revised 'Work Experience' section as a JSON array of objects.
+            You are a world-class professional resume writer and career coach. Your task is to revise and tailor the provided resume (in JSON format) to perfectly match the given job description.
+            Perform a holistic review and revision of the entire resume.
 
-            **Original Work Experience:**
+            1.  **Rewrite the 'summary'**: Make it concise, impactful, and align it with the key requirements and language of the job description.
+            2.  **Revise the 'experience' descriptions**: Rephrase bullet points using the STAR (Situation, Task, Action, Result) method. Emphasize accomplishments and quantify results. Directly map experiences to the skills and responsibilities listed in the job description.
+            3.  **Optimize the 'skills'**: Re-order, group, or add skills to highlight the most relevant qualifications mentioned in the job description.
+            4.  **Maintain JSON format**: Return the complete, revised resume as a single, valid JSON object.
+
+            **Original Resume (JSON):**
             ---
-            ${JSON.stringify(structuredResume.experience, null, 2)}
+            ${JSON.stringify(structuredResume, null, 2)}
             ---
 
             **Job Description:**
             ---
             ${jobDescription}
             ---
+
+            Return only the full, revised JSON object.
         `;
 
         const llmResponse = await axios.post(process.env.LLM_API_URL, {
@@ -60,17 +66,14 @@ router.post('/tailor', upload.single('resume'), async (req, res) => {
         });
 
         const responseText = llmResponse.data.response;
-        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
-            throw new Error("Failed to find JSON in LLM response for tailoring.");
+            throw new Error("Failed to find a valid JSON object in the LLM's response.");
         }
 
-        const tailoredExperience = JSON.parse(jsonMatch[0]);
+        const tailoredResume = JSON.parse(jsonMatch[0]);
 
-        res.json({
-            original_resume: structuredResume,
-            tailored_experience: tailoredExperience
-        });
+        res.json(tailoredResume);
 
     } catch (error) {
         console.error("Error in /tailor endpoint:", error);

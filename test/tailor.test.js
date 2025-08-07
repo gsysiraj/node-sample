@@ -35,15 +35,28 @@ describe('Resume Tailoring', () => {
             }
         });
 
+        const mockTailoredResume = {
+            contact: { name: 'John Doe', email: 'john.doe@example.com' },
+            summary: 'A highly motivated and results-oriented Senior Software Engineer.',
+            experience: [{ title: 'Senior Software Engineer', company: 'Big Tech Corp', description: 'Wrote excellent, well-tested code.' }],
+            education: [],
+            skills: ['JavaScript', 'Node.js', 'React']
+        };
+
+        axios.post.mockResolvedValue({
+            data: {
+                response: JSON.stringify(mockTailoredResume)
+            }
+        });
+
         const res = await request(app)
             .post('/api/resume/tailor')
             .attach('resume', pdfBuffer, 'dummy.pdf')
             .field('jobDescription', 'A job requiring excellent code.')
             .expect(200);
 
-        expect(res.body).toHaveProperty('original_resume');
-        expect(res.body).toHaveProperty('tailored_experience');
-        expect(res.body.original_resume.contact.name).toBe('John Doe');
-        expect(res.body.tailored_experience[0].title).toBe('Senior Software Engineer');
+        expect(res.body).toHaveProperty('summary');
+        expect(res.body.summary).toContain('Senior Software Engineer');
+        expect(res.body.experience[0].description).toContain('well-tested');
     });
 });
