@@ -62,7 +62,9 @@ async function humanizeText(text) {
             prompt: prompt,
             stream: false
         });
-        return response.data.response.trim();
+        // Strip out <think> tags and trim whitespace
+        const cleanedResponse = response.data.response.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+        return cleanedResponse;
     } catch (error) {
         console.error("Error humanizing text with LLM:", error);
         throw new Error("Failed to humanize text.");

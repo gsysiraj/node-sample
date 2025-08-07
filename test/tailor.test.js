@@ -7,6 +7,7 @@ const pdf = require('pdf-parse');
 const { structureResume } = require('../utils/llm_helper');
 
 jest.mock('axios');
+
 jest.mock('../utils/llm_helper');
 
 describe('Resume Endpoints', () => {
@@ -20,6 +21,7 @@ describe('Resume Endpoints', () => {
     });
 
     it('should tailor a resume and return the tailored experience', async () => {
+        const { structureResume } = require('../utils/llm_helper');
         const mockStructuredResume = {
             contact: { name: 'John Doe' },
             experience: [{ title: 'Software Engineer', company: 'Tech Corp', description: 'Wrote code.' }],
@@ -61,21 +63,30 @@ describe('Resume Endpoints', () => {
         expect(res.body.experience[0].description).toContain('well-tested');
     });
 
-    it('should humanize a resume and return the humanized resume', async () => {
+    it('should humanize a resume and return the humanized resume, stripping think tags', async () => {
         const mockResume = {
             summary: 'Synergized cross-functional teams to leverage core competencies.',
             experience: [{ description: 'Successfully executed the implementation of a new paradigm.' }]
         };
-        const humanizeText = require('../utils/llm_helper').humanizeText;
-        humanizeText.mockImplementation(text => Promise.resolve(`Humanized: ${text}`));
 
+        // Use the real implementation for humanizeText
+        const { humanizeText } = jest.requireActual('../utils/llm_helper.js');
+        require('../utils/llm_helper').humanizeText.mockImplementation(humanizeText);
+
+        axios.post.mockImplementation(async () => {
+            return {
+                data: {
+                    response: `<think>Okay, I need to make this sound more natural.</think>This has been humanized.`
+                }
+            };
+        });
 
         const res = await request(app)
             .post('/api/resume/humanize')
             .send(mockResume)
             .expect(200);
 
-        expect(res.body.summary).toBe('Humanized: Synergized cross-functional teams to leverage core competencies.');
-        expect(res.body.experience[0].description).toBe('Humanized: Successfully executed the implementation of a new paradigm.');
+        expect(res.body.summary).toBe('This has been humanized.');
+        expect(res.body.experience[0].description).toBe('This has been humanized.');
     });
 });
