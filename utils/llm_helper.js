@@ -40,4 +40,33 @@ async function structureResume(resumeText) {
     }
 }
 
-module.exports = { structureResume };
+async function humanizeText(text) {
+    const prompt = `
+        You are an expert in professional communication. Your task is to revise the following text to make it sound more natural and human, as if it were written by a person, not an AI.
+        - Vary sentence structure and length.
+        - Replace corporate jargon with clearer, more direct language.
+        - Adjust the tone to be slightly more conversational while maintaining professionalism.
+        - Ensure the core meaning and professional impact of the text are preserved.
+
+        Here is the text to revise:
+        ---
+        ${text}
+        ---
+
+        Return only the revised text.
+    `;
+
+    try {
+        const response = await axios.post(process.env.LLM_API_URL, {
+            model: process.env.LLM_MODEL_NAME,
+            prompt: prompt,
+            stream: false
+        });
+        return response.data.response.trim();
+    } catch (error) {
+        console.error("Error humanizing text with LLM:", error);
+        throw new Error("Failed to humanize text.");
+    }
+}
+
+module.exports = { structureResume, humanizeText };

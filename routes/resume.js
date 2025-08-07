@@ -21,7 +21,7 @@ router.post('/parse', upload.single('resume'), async (req, res) => {
     }
 });
 
-const { structureResume } = require('../utils/llm_helper');
+const { structureResume, humanizeText } = require('../utils/llm_helper');
 
 router.post('/tailor', upload.single('resume'), async (req, res) => {
     if (!req.file) {
@@ -78,6 +78,38 @@ router.post('/tailor', upload.single('resume'), async (req, res) => {
     } catch (error) {
         console.error("Error in /tailor endpoint:", error);
         res.status(500).json({ error: 'Failed to tailor resume.' });
+    }
+});
+
+router.post('/humanize', async (req, res) => {
+    const structuredResume = req.body;
+
+    if (!structuredResume || !structuredResume.experience) {
+        return res.status(400).json({ error: 'Invalid resume object provided.' });
+    }
+
+    try {
+        const humanizedResume = { ...structuredResume };
+
+        // Humanize the summary
+        if (humanizedResume.summary) {
+            humanizedResume.summary = await humanizeText(humanizedResume.summary);
+        }
+
+        // Humanize the experience descriptions
+        humanizedResume.experience = await Promise.all(
+            humanizedResume.experience.map(async (exp) => {
+                if (exp.description) {
+                    exp.description = await humanizeText(exp.description);
+                }
+                return exp;
+            })
+        );
+
+        res.json(humanizedResume);
+    } catch (error) {
+        console.error("Error in /humanize endpoint:", error);
+        res.status(500).json({ error: 'Failed to humanize resume.' });
     }
 });
 

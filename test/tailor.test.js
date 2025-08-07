@@ -9,7 +9,7 @@ const { structureResume } = require('../utils/llm_helper');
 jest.mock('axios');
 jest.mock('../utils/llm_helper');
 
-describe('Resume Tailoring', () => {
+describe('Resume Endpoints', () => {
     let pdfBuffer;
 
     beforeAll(() => {
@@ -43,6 +43,7 @@ describe('Resume Tailoring', () => {
             skills: ['JavaScript', 'Node.js', 'React']
         };
 
+        structureResume.mockResolvedValue(mockStructuredResume);
         axios.post.mockResolvedValue({
             data: {
                 response: JSON.stringify(mockTailoredResume)
@@ -58,5 +59,23 @@ describe('Resume Tailoring', () => {
         expect(res.body).toHaveProperty('summary');
         expect(res.body.summary).toContain('Senior Software Engineer');
         expect(res.body.experience[0].description).toContain('well-tested');
+    });
+
+    it('should humanize a resume and return the humanized resume', async () => {
+        const mockResume = {
+            summary: 'Synergized cross-functional teams to leverage core competencies.',
+            experience: [{ description: 'Successfully executed the implementation of a new paradigm.' }]
+        };
+        const humanizeText = require('../utils/llm_helper').humanizeText;
+        humanizeText.mockImplementation(text => Promise.resolve(`Humanized: ${text}`));
+
+
+        const res = await request(app)
+            .post('/api/resume/humanize')
+            .send(mockResume)
+            .expect(200);
+
+        expect(res.body.summary).toBe('Humanized: Synergized cross-functional teams to leverage core competencies.');
+        expect(res.body.experience[0].description).toBe('Humanized: Successfully executed the implementation of a new paradigm.');
     });
 });
